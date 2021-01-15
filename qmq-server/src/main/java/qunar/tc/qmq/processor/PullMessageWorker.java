@@ -45,7 +45,9 @@ class PullMessageWorker implements ActorSystem.Processor<PullMessageProcessor.Pu
     }
 
     void pull(PullMessageProcessor.PullEntry pullEntry) {
+        // subject+group作actor调度粒度
         final String actorPath = ConsumerGroupUtils.buildConsumerGroupKey(pullEntry.subject, pullEntry.group);
+        // actor调度
         actorSystem.dispatch(actorPath, pullEntry, this);
     }
 
@@ -55,6 +57,7 @@ class PullMessageWorker implements ActorSystem.Processor<PullMessageProcessor.Pu
 
         //开始处理请求的时候就过期了，那么就直接不处理了，也不返回任何东西给客户端，客户端等待超时
         //因为出现这种情况一般是server端排队严重，暂时挂起客户端可以避免情况恶化
+        // deadline机制，如果QMQ认为这个消费请求来不及处理，那么就直接返回，避免雪崩
         if (entry.expired()) {
             QMon.pullExpiredCountInc(entry.subject, entry.group);
             return true;
@@ -65,6 +68,7 @@ class PullMessageWorker implements ActorSystem.Processor<PullMessageProcessor.Pu
             return true;
         }
 
+        // 存储层find消息
         final PullMessageResult pullMessageResult = store.findMessages(entry.pullRequest);
 
         if (pullMessageResult == PullMessageResult.FILTER_EMPTY ||
@@ -75,18 +79,22 @@ class PullMessageWorker implements ActorSystem.Processor<PullMessageProcessor.Pu
             return true;
         }
 
+        // 没有拉取到消息，那么挂起该actor
         self.suspend();
         if (entry.setTimerOnDemand()) {
             QMon.suspendRequestCountInc(entry.subject, entry.group);
+            // 订阅消息，一有消息来就唤醒该actor
             subscribe(entry.subject, entry.group);
             return false;
         }
 
+        // 已经超时，那么即刻唤醒调度
         self.resume();
         entry.processNoMessageResult();
         return true;
     }
 
+    // 订阅
     private void subscribe(String subject, String group) {
         ConcurrentMap<String, Object> map = subscribers.get(subject);
         if (map == null) {
@@ -96,6 +104,7 @@ class PullMessageWorker implements ActorSystem.Processor<PullMessageProcessor.Pu
         map.putIfAbsent(group, HOLDER);
     }
 
+    // 有消息来就唤醒订阅的subscriber
     void remindNewMessages(final String subject) {
         final ConcurrentMap<String, Object> map = this.subscribers.get(subject);
         if (map == null) return;

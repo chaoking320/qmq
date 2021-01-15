@@ -85,12 +85,19 @@ public class ServerWrapper implements Disposable {
 
     public void start(boolean autoOnline) {
         LOG.info("qmq server init started");
+        // 向注册中心注册
         register();
+        // 创建log仓库
         createStorage();
+        // 开启同步日志
         startSyncLog();
+        // 初始化仓库
         initStorage();
+
         startServeSync();
+        // 开启服务端处理器
         startServerHandlers();
+        // 开启消费者判断者
         startConsumerChecker();
         startSyncLagChecker();
         addToResources();

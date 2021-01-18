@@ -40,13 +40,18 @@ public class JdbcTemplateHolder {
     }
 
 	private static DataSource createDataSource() {
-		final DynamicConfig config = DynamicConfigLoader.load("datasource.properties");
-		ServiceLoader<DataSourceFactory> factories = ServiceLoader.load(DataSourceFactory.class);
-		for (DataSourceFactory factory : factories) {
-			return factory.createDataSource(config);
-		}
+      final DynamicConfig config = DynamicConfigLoader.load("datasource.properties");
+        try{
+            ServiceLoader<DataSourceFactory> factories = ServiceLoader.load(DataSourceFactory.class);
+            for (DataSourceFactory factory : factories) {
+                return factory.createDataSource(config);
+            }
 
-		return new DefaultDataSourceFactory().createDataSource(config);
+            return new DefaultDataSourceFactory().createDataSource(config);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+        return null;
 	}
 
     public static JdbcTemplate getOrCreate() {

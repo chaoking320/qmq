@@ -1,0 +1,5 @@
+message log: 所有的消息信息
+
+consume log: 索引信息针对topic分组
+
+pull log: consumer拉取消息时产生的记录，pull log记录的是拉取的消息在consume log中的sequence，那么消费者就可以使用pull log上的sequence来表示消费进度

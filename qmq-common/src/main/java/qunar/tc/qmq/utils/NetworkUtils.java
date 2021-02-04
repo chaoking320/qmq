@@ -44,6 +44,7 @@ public class NetworkUtils {
         }
     }
 
+    // 返回本地IP地址
     public static String getLocalAddress() {
         try {
             String customIP = System.getProperty("qmq.ip");

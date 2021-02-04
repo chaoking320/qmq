@@ -59,7 +59,9 @@ public class SubscriberStatusChecker implements ActorSystem.Processor<Subscriber
     }
 
     public void init() {
+        // 销毁拉取的日志信息 & 移除检查站
         cleanPullLogAndCheckpoint();
+        // 初始化消息监听者
         initSubscribers();
     }
 

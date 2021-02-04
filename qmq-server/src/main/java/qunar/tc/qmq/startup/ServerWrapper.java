@@ -119,8 +119,10 @@ public class ServerWrapper implements Disposable {
     private void register() {
         this.listenPort = config.getInt(PORT_CONFIG, DEFAULT_PORT);
 
+        // http://localhost:8080/meta/address
         final MetaServerLocator metaServerLocator = new MetaServerLocator(config.getString(META_SERVER_ENDPOINT));
         brokerRegisterService = new BrokerRegisterService(listenPort, metaServerLocator);
+        // 将该服务注册到注册中心
         brokerRegisterService.start();
 
         Preconditions.checkState(BrokerConfig.getBrokerRole() != BrokerRole.STANDBY, "目前broker不允许被指定为standby模式");
